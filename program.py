@@ -1,20 +1,27 @@
+import re
+
 def convert_to_dict(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
 
     result_dict = {}
-    # Extract the keys
+    
     for i in range(len(lines)):
         line = lines[i].strip()
         if line.startswith('>'):
             parts = line.split('|')
             accession_number = parts[1] 
-            full_identifier = parts[2].split('OS=')[0].strip()
 
+            # Extract the protein name and OX number using regex
+            match = re.search(r'OS=.+? OX=(\d+)', parts[2])
+            if match:
+                ox_number = match.group(1)  # The number after OX=
+            else:
+                ox_number = ''  # Handle case if OX number is not found
+
+            # Extract the composite identifier and protein name
             composite_identifier = parts[2].split(' ')[0]
-
             protein_name = ' '.join(parts[2].split(' ')[1:]).split(' OS=')[0].strip()
-            print(protein_name)
 
             sequence = ''
             # Extract the sequence  
@@ -25,8 +32,10 @@ def convert_to_dict(file_path):
                     break
                 sequence += seq_line
             
-            key = f"{accession_number}_{protein_name}"
+            # Combine uniprot id, protein name, and OX number in the key
+            key = f"{accession_number}_{protein_name}_{ox_number}"
             result_dict[key] = sequence
+        
         i += 1
     return result_dict
 
@@ -38,5 +47,3 @@ protein_dict = convert_to_dict(file_path)
 with open('full_output.txt', 'w') as output_file:
     for key, value in protein_dict.items():
         output_file.write(f'{key}: {value}\n\n')
-
-

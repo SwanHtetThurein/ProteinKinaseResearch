@@ -1,10 +1,10 @@
 import random
 
-def sample_and_verify(input_path, output_path, sample_size=10):
+def sample_and_verify(input_path, output_path, sample_size=10, verification_output='verification_output.txt'):
     with open(input_path, 'r') as infile:
         input_lines = infile.readlines()
 
-    
+    # Extract the original identifiers and sequences for validation
     original_dict = {}
     i = 0
     while i < len(input_lines):
@@ -14,7 +14,7 @@ def sample_and_verify(input_path, output_path, sample_size=10):
             accession_number = parts[1]
             protein_name = ' '.join(parts[2].split(' ')[1:]).split(' OS=')[0].strip()
             key = f"{accession_number}_{protein_name}"
-            
+
             sequence = ''
             for seq_line in input_lines[i + 1:]:
                 if seq_line.startswith('>'):
@@ -37,17 +37,20 @@ def sample_and_verify(input_path, output_path, sample_size=10):
     # Randomly sample keys from the original dictionary
     sampled_keys = random.sample(list(original_dict.keys()), sample_size)
 
-    # Compare the sequences in the sample
-    for key in sampled_keys:
-        if key in output_dict:
-            if original_dict[key] != output_dict[key]:
-                print(f"Discrepancy found for {key}")
-        else:
-            print(f"Key missing in output: {key}")
+    # Compare the sequences in the sample and write results to a new file
+    with open(verification_output, 'w') as ver_output:
+        for key in sampled_keys:
+            if key in output_dict:
+                if original_dict[key] != output_dict[key]:
+                    ver_output.write(f"Discrepancy found for {key}\n")
+            else:
+                ver_output.write(f"Key missing in output: {key}\n")
 
-    print("Sample verification complete.")
+    print(f"Sample verification complete. Results saved to '{verification_output}'")
 
-# Run the sampling verification
-input_file = 'full_data.txt' 
-output_file = 'full_output.txt'  
-sample_and_verify(input_file, output_file)
+# Example usage
+input_file_path = 'full_data.txt'       # Path to the input file
+output_file_path = 'full_output.txt'  # Path to the original output file
+verification_output_path = 'verification_output.txt'  # New verification output file path
+
+sample_and_verify(input_file_path, output_file_path, sample_size=10, verification_output=verification_output_path)
